@@ -1,0 +1,89 @@
+# Cursor-Native Experiment Protocol (CNEP) v1.0
+# LeRobot 模型训练协同实验规范
+
+## 核心原则
+
+你是一个**执行者**，不是决策者。所有实验参数必须有据可查，严禁凭空创造。
+
+## 强制行为规范
+
+### 1. 启动任何实验前，必须执行
+
+```
+READ experiment_registry.md  # 了解当前 SOTA 和历史参数
+READ experiments/<parent_exp>/config.yaml  # 基于父实验配置
+```
+
+### 2. 参数修改规则
+
+- **严禁**：凭记忆设置参数
+- **必须**：基于 `experiment_registry.md` 中记录的最佳配置
+- **必须**：明确说明"基于 exp_XXX 修改了哪些参数"
+
+### 3. 创建新实验时
+
+1. 在 `experiments/` 下创建 `exp_NNN_name/` 目录
+2. 从 `scripts/templates/` **复制**模板到实验目录
+3. 修改复制后的脚本，**严禁修改** `scripts/templates/` 下的原始模板
+4. 生成 `config.yaml` 记录所有参数
+5. 更新 `experiment_registry.md` 添加新行
+
+### 4. 实验目录结构
+
+```
+experiments/exp_NNN_name/
+├── config.yaml      # 完整参数配置
+├── run_train.sh     # 训练启动脚本（从模板复制）
+├── run_eval.sh      # 评估启动脚本（从模板复制）
+├── train.log        # 训练日志
+├── eval_result.json # 评估结果
+└── notes.md         # 实验结论
+```
+
+## 关键参数参考表（从历史实验中提取）
+
+### Diffusion Policy (PushT)
+
+| 参数 | 默认值 | 最佳值 | 说明 |
+|------|--------|--------|------|
+| training_steps | 5000 | 100000 | 训练步数 |
+| horizon | 16 | 32 | 预测序列长度 |
+| n_action_steps | 8 | 8 | 执行动作数 |
+| batch_size | 32 | 32 | 批量大小 |
+| down_dims | [256,512,1024] | [256,512,1024] | U-Net 维度 |
+
+### ACT (PushT)
+
+| 参数 | 默认值 | 最佳值 | 说明 |
+|------|--------|--------|------|
+| training_steps | 5000 | 20000+ | 训练步数 |
+| chunk_size | **10** | **10** | ⚠️ Action Chunk 大小，严禁随意修改！ |
+| n_action_steps | **10** | **10** | ⚠️ 必须与 chunk_size 匹配！ |
+| dim_model | 512 | 1024 | Transformer 维度 |
+| n_decoder_layers | 1 | 4 | Decoder 层数 |
+| batch_size | 32 | 32 | 批量大小 |
+
+## 历史教训记录
+
+### 2026-01-12: chunk_size 错误导致实验失败
+
+- **错误**: 将 ACT 的 `chunk_size` 从 10 改为 100
+- **后果**: 10 个实验全部失败，成功率 0%
+- **原因**: chunk_size=100 意味着预测未来 10 秒动作，难度过大
+- **教训**: 修改关键参数前必须查阅历史最佳配置
+
+## 检查清单（每次起实验前）
+
+- [ ] 已读取 `experiment_registry.md`
+- [ ] 已确认父实验及其参数
+- [ ] 关键参数与历史最佳一致（或有明确实验目的）
+- [ ] 创建了实验目录和 config.yaml
+- [ ] 更新了 experiment_registry.md
+
+## 禁止行为
+
+1. ❌ 不查阅历史就设置参数
+2. ❌ 直接修改 `scripts/templates/` 下的文件
+3. ❌ 在原有实验目录上修改配置重跑
+4. ❌ 使用"默认值"而不是"历史最佳值"
+5. ❌ 批量起实验时使用未经验证的参数组合
