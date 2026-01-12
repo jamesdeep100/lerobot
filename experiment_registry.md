@@ -45,18 +45,10 @@
 
 ### 关键发现 (ACT)
 
-1. ⚠️ **chunk_size=10 极其关键！** 绝对不能改成 100！
-2. `dim_model=1024` 优于 `dim_model=512`
-3. `n_decoder_layers=4` 是最优值
-4. 更多训练 (50k+) 可能进一步提升
-
-### 关键参数 (ACT)
-
-```yaml
-# 没有明确实验目的时，绝对不要修改这些参数：
-chunk_size: 10        # 预测1秒的动作序列
-n_action_steps: 10    # 必须与 chunk_size 匹配
-```
+1. `dim_model=1024` 优于 `dim_model=512`
+2. `n_decoder_layers=4` 是最优值
+3. 更多训练 (50k+) 可能进一步提升
+4. chunk_size=10 在当前实验中表现最佳（可探索其他值）
 
 ---
 
@@ -105,8 +97,6 @@ vim experiments/${BATCH_ID}/config.yaml
 ### ⚠️ 启动前检查
 
 - [ ] 查阅本文档确认最佳参数
-- [ ] ACT: chunk_size=10, n_action_steps=10
-- [ ] Diffusion: horizon=32, n_action_steps=8
 - [ ] 每个实验都指定了 parent 父实验
 - [ ] 台式机 Tailscale 连接正常
 

@@ -118,11 +118,11 @@ git stash pop 2>/dev/null || true
 
 ### ACT (PushT)
 
-| 参数 | 默认值 | 最佳值 | 说明 |
-|------|--------|--------|------|
+| 参数 | 默认值 | 当前最佳 | 说明 |
+|------|--------|----------|------|
 | training_steps | 5000 | 20000+ | 训练步数 |
-| chunk_size | **10** | **10** | ⚠️ Action Chunk 大小，严禁随意修改！ |
-| n_action_steps | **10** | **10** | ⚠️ 必须与 chunk_size 匹配！ |
+| chunk_size | 10 | 10 | Action Chunk 大小 |
+| n_action_steps | 10 | 10 | 每次执行动作数 |
 | dim_model | 512 | 1024 | Transformer 维度 |
 | n_decoder_layers | 1 | 4 | Decoder 层数 |
 | batch_size | 32 | 32 | 批量大小 |
@@ -136,12 +136,75 @@ git stash pop 2>/dev/null || true
 - **原因**: chunk_size=100 意味着预测未来 10 秒动作，难度过大
 - **教训**: 修改关键参数前必须查阅历史最佳配置
 
+## 多机批量实验规范
+
+### 7. 所有实验必须通过批量调度系统启动
+
+**严禁**直接运行单个训练脚本。所有实验必须通过 `scripts/run_batch.sh` 统一调度。
+
+### 8. 批量实验目录结构
+
+```
+experiments/batch_MMDD_HHMM/
+├── config.yaml          # 批次配置（从模板复制）
+├── batch.log            # 批次总日志
+├── exp_001_name/        # 子实验目录
+│   ├── config.yaml
+│   ├── metadata.yaml
+│   ├── ...
+├── exp_002_name/
+│   └── ...
+└── summary.md           # 批次总结（所有实验完成后生成）
+```
+
+### 9. 创建批量实验流程
+
+```bash
+# 1. 创建批次目录
+BATCH_ID="batch_$(date '+%m%d_%H%M')"
+mkdir -p experiments/${BATCH_ID}
+
+# 2. 从模板复制配置
+cp scripts/templates/batch_config.yaml experiments/${BATCH_ID}/config.yaml
+
+# 3. 编辑配置（必须指定 parent 和正确参数）
+vim experiments/${BATCH_ID}/config.yaml
+
+# 4. 启动批次实验
+./scripts/run_batch.sh experiments/${BATCH_ID}/config.yaml
+```
+
+### 10. 批次配置必须包含
+
+```yaml
+batch:
+  name: "batch_MMDD_HHMM"
+  purpose: "描述这批实验的目的"
+
+experiments:
+  - name: "exp_name"
+    policy: "act"           # 或 diffusion
+    machine: "desktop"      # 或 laptop
+    parent: "act_005"       # ⚠️ 必须指定父实验！
+    params:
+      # ⚠️ 从 experiment_registry.md 查找最佳参数
+```
+
+### 11. 机器配置
+
+| 机器 | GPU | Tailscale IP | 用途 |
+|------|-----|--------------|------|
+| 笔记本 | RTX 5090 | localhost | Diffusion 首选 |
+| 台式机 | RTX 3060 Ti | 100.67.100.43 | ACT 首选 |
+
 ## 检查清单（每次起实验前）
 
 - [ ] 已读取 `experiment_registry.md`
 - [ ] 已确认父实验及其参数
 - [ ] 关键参数与历史最佳一致（或有明确实验目的）
-- [ ] 创建了实验目录和 config.yaml
+- [ ] 创建了批次目录和 config.yaml
+- [ ] 参数与 experiment_registry.md 中最佳配置一致
+- [ ] 通过 `run_batch.sh` 启动（不是直接运行脚本）
 - [ ] 更新了 experiment_registry.md
 
 ## 禁止行为
@@ -151,3 +214,5 @@ git stash pop 2>/dev/null || true
 3. ❌ 在原有实验目录上修改配置重跑
 4. ❌ 使用"默认值"而不是"历史最佳值"
 5. ❌ 批量起实验时使用未经验证的参数组合
+6. ❌ 绕过 `run_batch.sh` 直接运行训练脚本
+7. ❌ 批次配置中不指定 parent 父实验

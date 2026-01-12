@@ -27,9 +27,9 @@ BATCH_SIZE=32                     # 批量大小
 DIM_MODEL=1024                    # Transformer 维度 (最佳: 1024)
 N_DECODER_LAYERS=4                # Decoder 层数 (最佳: 4)
 
-# ⚠️ 关键参数 - 除非有明确实验目的，否则不要修改！
-CHUNK_SIZE=10                     # Action Chunk 大小 (最佳: 10)
-N_ACTION_STEPS=10                 # 执行动作数 (必须与 chunk_size 匹配!)
+# 动作序列参数
+CHUNK_SIZE=10                     # Action Chunk 大小
+N_ACTION_STEPS=10                 # 执行动作数
 
 # ============================================
 # 以下内容无需修改
@@ -45,11 +45,6 @@ log() { echo -e "${GREEN}[$(date '+%H:%M:%S')]${NC} $1"; }
 warn() { echo -e "${YELLOW}[$(date '+%H:%M:%S')] ⚠️ $1${NC}"; }
 error() { echo -e "${RED}[$(date '+%H:%M:%S')] ❌ $1${NC}"; exit 1; }
 
-# ⚠️ 安全检查：chunk_size 和 n_action_steps 必须匹配
-if [ "${CHUNK_SIZE}" != "${N_ACTION_STEPS}" ]; then
-    warn "chunk_size (${CHUNK_SIZE}) != n_action_steps (${N_ACTION_STEPS})"
-    warn "这可能导致性能问题，请确认是有意为之"
-fi
 
 # 设置环境
 cd /home/james/ai_projects/lerobot

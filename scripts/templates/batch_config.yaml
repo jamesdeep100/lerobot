@@ -44,8 +44,8 @@ experiments:
       steps: 50000
       dim_model: 1024
       n_decoder_layers: 4
-      chunk_size: 10      # ⚠️ 必须是 10
-      n_action_steps: 10  # ⚠️ 必须与 chunk_size 匹配
+      chunk_size: 10
+      n_action_steps: 10
       batch_size: 32
     eval:
       enabled: true
@@ -68,7 +68,5 @@ experiments:
 # 检查清单（启动前必须确认）
 checklist:
   - "已查阅 experiment_registry.md 确认父实验和最佳参数"
-  - "ACT 的 chunk_size=10, n_action_steps=10"
-  - "Diffusion 的 horizon=32, n_action_steps=8"
   - "所有实验都有明确的 parent 指向"
   - "台式机 SSH/Tailscale 连接正常"
