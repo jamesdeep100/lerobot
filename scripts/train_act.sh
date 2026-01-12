@@ -1,22 +1,28 @@
 #!/bin/bash
 # ============================================
-# ACT (Action Chunking Transformer) 训练模板
+# ACT (Action Chunking Transformer) 训练脚本
 # 
 # 使用方法：
-#   1. 复制此文件到 experiments/exp_NNN_name/run_train.sh
-#   2. 修改下方 CONFIG 区域的参数
-#   3. 运行: ./run_train.sh
+#   ./scripts/train_act.sh <exp_name> [options]
 #
-# ⚠️ 严禁直接修改此模板文件！
+# 参数：
+#   --steps N          训练步数 (默认: 20000)
+#   --dim_model N      Transformer 维度 (默认: 1024)
+#   --n_decoder_layers N  Decoder 层数 (默认: 4)
+#   --chunk_size N     Action Chunk 大小 (默认: 10)
+#   --n_action_steps N 执行动作数 (默认: 10)
+#   --batch_size N     批量大小 (默认: 32)
+#   --eval             训练后自动评估
+#   --eval_episodes N  评估轮数 (默认: 50)
 # ============================================
 
 set -e
 
 # ============================================
-# CONFIG - 修改此区域的参数
+# 默认配置 (基于 experiment_registry.md 最优)
 # ============================================
 
-EXP_NAME="exp_NNN_name"           # 实验名称
+EXP_NAME="${1:-exp_unnamed}"      # 第一个参数是实验名称
 PARENT_EXP="act_005"              # 父实验 (用于追溯)
 
 # 训练参数 (参考 experiment_registry.md)
@@ -30,6 +36,57 @@ N_DECODER_LAYERS=4                # Decoder 层数 (最佳: 4)
 # 动作序列参数
 CHUNK_SIZE=10                     # Action Chunk 大小
 N_ACTION_STEPS=10                 # 执行动作数
+
+# 评估选项
+DO_EVAL=false
+EVAL_EPISODES=50
+
+# ============================================
+# 解析命令行参数
+# ============================================
+
+shift  # 跳过第一个参数 (exp_name)
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --steps)
+            TRAINING_STEPS="$2"
+            shift 2
+            ;;
+        --dim_model)
+            DIM_MODEL="$2"
+            shift 2
+            ;;
+        --n_decoder_layers)
+            N_DECODER_LAYERS="$2"
+            shift 2
+            ;;
+        --chunk_size)
+            CHUNK_SIZE="$2"
+            shift 2
+            ;;
+        --n_action_steps)
+            N_ACTION_STEPS="$2"
+            shift 2
+            ;;
+        --batch_size)
+            BATCH_SIZE="$2"
+            shift 2
+            ;;
+        --eval)
+            DO_EVAL=true
+            shift
+            ;;
+        --eval_episodes)
+            EVAL_EPISODES="$2"
+            shift 2
+            ;;
+        *)
+            echo "未知参数: $1"
+            shift
+            ;;
+    esac
+done
 
 # ============================================
 # 以下内容无需修改
@@ -189,4 +246,24 @@ git stash pop -q 2>/dev/null || true
 log "✅ 训练完成: ${OUTPUT_DIR}"
 log "📊 最终 Loss: ${FINAL_LOSS}"
 log "⏱️  训练时长: ${DURATION} 秒"
-log "💡 下一步: 运行 run_eval.sh 评估模型"
+
+# ============================================
+# 评估（如果启用）
+# ============================================
+
+if [ "$DO_EVAL" = true ]; then
+    log "🎯 开始评估 (${EVAL_EPISODES} episodes)..."
+    
+    python scripts/eval_model.py \
+        --model_path "${OUTPUT_DIR}" \
+        --policy_type act \
+        --n_episodes ${EVAL_EPISODES} \
+        2>&1 | tee "${OUTPUT_DIR}/eval.log"
+    
+    # 复制评估代码快照
+    cp scripts/eval_model.py "${OUTPUT_DIR}/eval_snapshot.py"
+    
+    log "✅ 评估完成"
+else
+    log "💡 下一步: 运行评估脚本"
+fi
