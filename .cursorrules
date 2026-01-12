@@ -43,6 +43,8 @@ READ experiments/<parent_exp>/config.yaml  # 基于父实验配置
 4. 生成 `config.yaml` 记录所有参数
 5. 更新 `experiment_registry.md` 添加新行
 
+**或者使用批量调度（推荐）：** 通过 `run_batch.sh` 启动，参数通过命令行传递，脚本会自动保存代码快照。
+
 ### 4. 实验目录结构（完整归档）
 
 ```
