@@ -280,6 +280,11 @@ if [ "$DO_EVAL" = true ]; then
     cp scripts/eval_model.py "${OUTPUT_DIR}/eval_snapshot.py"
     
     log "✅ 评估完成"
+    
+    # 自动更新 leaderboard 并推送
+    if [ -f "scripts/update_leaderboard.sh" ]; then
+        bash scripts/update_leaderboard.sh "${OUTPUT_DIR}" "act"
+    fi
 else
     log "💡 下一步: 运行评估脚本"
 fi
