@@ -426,6 +426,9 @@ EOF
 }
 
 # 运行所有实验
+# 全局变量：是否跳过确认
+SKIP_CONFIRM=${SKIP_CONFIRM:-false}
+
 run_all() {
     # 创建调度目录
     mkdir -p "${SCHEDULER_DIR}"
@@ -436,12 +439,17 @@ run_all() {
     local batch_log=$(generate_batch_log)
     log "📝 批次日志: $batch_log"
     
-    read -p "确认启动实验? (y/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        log "已取消"
-        update_batch_log "用户取消"
-        return
+    # 如果设置了 SKIP_CONFIRM=true 或传入 --yes，跳过确认
+    if [ "$SKIP_CONFIRM" != "true" ]; then
+        read -p "确认启动实验? (y/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            log "已取消"
+            update_batch_log "用户取消"
+            return
+        fi
+    else
+        log "跳过确认 (SKIP_CONFIRM=true)"
     fi
     
     update_batch_log "用户确认启动"

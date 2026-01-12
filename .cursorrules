@@ -7,12 +7,15 @@
 lerobot/
 ├── .cursorrules              # 核心规范（本文件）
 ├── experiment_registry.md    # 实验记录表（参数历史、SOTA）
-└── scripts/templates/        # 模板文件（只读，严禁修改）
-    ├── batch_config.yaml     # 批次配置模板
-    ├── run_batch.sh          # 多机调度脚本
-    ├── train_act.sh          # ACT 训练模板
-    ├── train_diffusion.sh    # Diffusion 训练模板
-    └── eval_model.sh         # 评估模板
+├── scripts/
+│   ├── train_act.sh          # -> templates/train_act.sh (符号链接)
+│   ├── train_diffusion.sh    # -> templates/train_diffusion.sh (符号链接)
+│   └── templates/            # 模板文件（只读，严禁修改）
+│       ├── run_batch.sh      # 多机调度脚本
+│       ├── train_act.sh      # ACT 训练模板
+│       ├── train_diffusion.sh # Diffusion 训练模板
+│       └── eval_model.sh     # 评估模板
+└── experiments/              # 实验归档目录
 ```
 
 ## 核心原则
@@ -174,34 +177,26 @@ experiments/batch_MMDD_HHMM/
 ### 9. 创建批量实验流程
 
 ```bash
-# 1. 创建批次目录
-BATCH_ID="batch_$(date '+%m%d_%H%M')"
-mkdir -p experiments/${BATCH_ID}
+cd ~/ai_projects/lerobot
+source scripts/templates/run_batch.sh
 
-# 2. 从模板复制配置
-cp scripts/templates/batch_config.yaml experiments/${BATCH_ID}/config.yaml
+# 添加实验（基于 experiment_registry.md 中的最佳配置）
+add_laptop_exp "act" "exp_name" "--steps 50000 --dim_model 1024 --n_decoder_layers 4 --chunk_size 10 --eval"
+add_desktop_exp "diffusion" "exp_name" "--steps 100000 --horizon 32 --eval"
 
-# 3. 编辑配置（必须指定 parent 和正确参数）
-vim experiments/${BATCH_ID}/config.yaml
-
-# 4. 启动批次实验
-./scripts/run_batch.sh experiments/${BATCH_ID}/config.yaml
+# 启动（会提示确认，或设置 SKIP_CONFIRM=true 跳过）
+SKIP_CONFIRM=true run_all
 ```
 
-### 10. 批次配置必须包含
+### 10. 添加实验的参数格式
 
-```yaml
-batch:
-  name: "batch_MMDD_HHMM"
-  purpose: "描述这批实验的目的"
+```bash
+add_laptop_exp "<policy>" "<name>" "<options>"
+add_desktop_exp "<policy>" "<name>" "<options>"
 
-experiments:
-  - name: "exp_name"
-    policy: "act"           # 或 diffusion
-    machine: "desktop"      # 或 laptop
-    parent: "act_005"       # ⚠️ 必须指定父实验！
-    params:
-      # ⚠️ 从 experiment_registry.md 查找最佳参数
+# policy: act 或 diffusion
+# name: 实验名称（会自动加上时间戳前缀）
+# options: 训练参数，从 experiment_registry.md 查找最佳值
 ```
 
 ### 11. 机器配置
