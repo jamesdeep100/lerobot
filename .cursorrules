@@ -14,7 +14,7 @@
 │       └── eval_model.py         # 评估脚本
 │
 └── lerobot-experiments/          # 实验结果仓库（独立）
-    ├── experiment_registry.md    # 实验记录表（参数历史、SOTA）
+    ├── leaderboard.md    # 实验记录表（参数历史、SOTA）
     ├── YYYYMMDD_HHMM_batch/      # 批次目录
     │   ├── batch.md              # 批次日志
     │   ├── laptop.sh/log         # 笔记本执行脚本/日志
@@ -34,13 +34,13 @@
 ### 1. 启动任何实验前，必须执行
 
 ```
-READ experiment_registry.md  # 了解当前 SOTA 和历史参数
+READ leaderboard.md  # 了解当前 SOTA 和历史参数
 ```
 
 ### 2. 参数修改规则
 
 - **严禁**：凭记忆设置参数
-- **必须**：基于 `experiment_registry.md` 中记录的最佳配置
+- **必须**：基于 `leaderboard.md` 中记录的最佳配置
 - **必须**：明确说明"基于 exp_XXX 修改了哪些参数"
 
 ### 3. 启动实验方式
@@ -51,7 +51,7 @@ READ experiment_registry.md  # 了解当前 SOTA 和历史参数
 cd ~/ai_projects/lerobot
 source scripts/run_batch.sh
 
-# 添加实验（参数从 experiment_registry.md 查找）
+# 添加实验（参数从 leaderboard.md 查找）
 add_laptop_exp "act" "exp_name" "--steps 50000 --dim_model 1024 --chunk_size 10 --eval"
 add_desktop_exp "diffusion" "exp_name" "--steps 100000 --horizon 32 --eval"
 
@@ -160,7 +160,7 @@ run_all
 
 - **错误**: 将 ACT 的 `chunk_size` 从 10 改为 100
 - **后果**: 10 个实验全部失败，成功率 0%
-- **教训**: 修改关键参数前必须查阅 experiment_registry.md
+- **教训**: 修改关键参数前必须查阅 leaderboard.md
 
 ## 多机配置
 
@@ -171,10 +171,10 @@ run_all
 
 ## 检查清单
 
-- [ ] 已读取 `experiment_registry.md`
+- [ ] 已读取 `leaderboard.md`
 - [ ] 参数基于历史最佳配置
 - [ ] 通过 `run_batch.sh` 启动
-- [ ] 实验完成后更新 `experiment_registry.md`
+- [ ] 实验完成后更新 `leaderboard.md`
 
 ## 禁止行为
 
