@@ -8,13 +8,11 @@ lerobot/
 ├── .cursorrules              # 核心规范（本文件）
 ├── experiment_registry.md    # 实验记录表（参数历史、SOTA）
 ├── scripts/
-│   ├── train_act.sh          # -> templates/train_act.sh (符号链接)
-│   ├── train_diffusion.sh    # -> templates/train_diffusion.sh (符号链接)
-│   └── templates/            # 模板文件（只读，严禁修改）
-│       ├── run_batch.sh      # 多机调度脚本
-│       ├── train_act.sh      # ACT 训练模板
-│       ├── train_diffusion.sh # Diffusion 训练模板
-│       └── eval_model.sh     # 评估模板
+│   ├── templates/            # 模板文件（只读，严禁修改）
+│   │   ├── run_batch.sh      # 多机调度脚本
+│   │   ├── train_act.sh      # ACT 训练模板
+│   │   ├── train_diffusion.sh # Diffusion 训练模板
+│   │   └── eval_model.sh     # 评估模板
 └── experiments/              # 实验归档目录
 ```
 
@@ -184,8 +182,8 @@ source scripts/templates/run_batch.sh
 add_laptop_exp "act" "exp_name" "--steps 50000 --dim_model 1024 --n_decoder_layers 4 --chunk_size 10 --eval"
 add_desktop_exp "diffusion" "exp_name" "--steps 100000 --horizon 32 --eval"
 
-# 启动（会提示确认，或设置 SKIP_CONFIRM=true 跳过）
-SKIP_CONFIRM=true run_all
+# 启动
+run_all
 ```
 
 ### 10. 添加实验的参数格式

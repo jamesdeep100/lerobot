@@ -1,1 +1,0 @@
-templates/train_act.sh
