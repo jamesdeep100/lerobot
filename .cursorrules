@@ -1,6 +1,20 @@
 # Cursor-Native Experiment Protocol (CNEP) v1.1
 # LeRobot 模型训练协同实验规范
 
+## 规范文件结构
+
+```
+lerobot/
+├── .cursorrules              # 核心规范（本文件）
+├── experiment_registry.md    # 实验记录表（参数历史、SOTA）
+└── scripts/templates/        # 模板文件（只读，严禁修改）
+    ├── batch_config.yaml     # 批次配置模板
+    ├── run_batch.sh          # 多机调度脚本
+    ├── train_act.sh          # ACT 训练模板
+    ├── train_diffusion.sh    # Diffusion 训练模板
+    └── eval_model.sh         # 评估模板
+```
+
 ## 核心原则
 
 你是一个**执行者**，不是决策者。所有实验参数必须有据可查，严禁凭空创造。
