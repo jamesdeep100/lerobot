@@ -1,78 +1,78 @@
-# Model Experiment Leaderboard
+# 模型实验排行榜
 
-> **User Instruction:** Before starting any new experiment, READ this table to understand the current SOTA and parameter history.
+> **重要提示：** 启动任何新实验前，必须先阅读此表，了解当前最优配置和参数历史。
 
-## Current SOTA
+## 当前最优 (SOTA)
 
-| Task | Policy | Success Rate | Config | Experiment |
-|------|--------|--------------|--------|------------|
-| PushT | Diffusion | **54%** | 100k steps, h=32, a=8 | exp_006 |
-| PushT | ACT | **24%** | 20k steps, dim=1024, dec=4, chunk=10 | exp_005 |
-
----
-
-## Diffusion Policy Experiments (PushT)
-
-| Exp ID | Date | Parent | Steps | horizon | n_action | down_dims | Success | avg_sum | avg_max | Status | Notes |
-|--------|------|--------|-------|---------|----------|-----------|---------|---------|---------|--------|-------|
-| exp_001 | 2026-01-10 | - | 20k | 16 | 8 | [256,512,1024] | 12% | 79.5 | 62.6% | Done | Baseline |
-| exp_002 | 2026-01-10 | exp_001 | 50k | 16 | 8 | [256,512,1024] | 16% | 112.2 | 62.6% | Done | More steps |
-| exp_003 | 2026-01-10 | exp_001 | 20k | **32** | 8 | [256,512,1024] | 18% | 86.1 | 54.1% | Done | Larger horizon |
-| exp_004 | 2026-01-10 | exp_001 | 20k | 16 | **16** | [256,512,1024] | 2% | 53.6 | - | Done | More action steps (bad) |
-| exp_005 | 2026-01-10 | exp_001 | 20k | 16 | **4** | [256,512,1024] | 6% | 76.4 | 54.1% | Done | Less action steps (bad) |
-| **exp_006** | 2026-01-10 | exp_003 | **100k** | **32** | 8 | [256,512,1024] | **54%** | 97.14 | 96.5% | Done | **🏆 SOTA** |
-
-### Key Findings (Diffusion)
-
-1. `horizon=32` > `horizon=16` (+6pp)
-2. `n_action_steps=8` is optimal
-3. 100k steps = 125 epochs, significant improvement over 20k
+| 任务 | 策略 | 成功率 | 配置 | 实验编号 |
+|------|------|--------|------|----------|
+| PushT | Diffusion | **54%** | 100k步, h=32, a=8 | exp_006 |
+| PushT | ACT | **24%** | 20k步, dim=1024, dec=4, chunk=10 | act_005 |
 
 ---
 
-## ACT Experiments (PushT)
+## Diffusion Policy 实验 (PushT)
 
-| Exp ID | Date | Parent | Steps | dim_model | n_dec | chunk_size | n_action | Success | avg_sum | avg_max | Status | Notes |
-|--------|------|--------|-------|-----------|-------|------------|----------|---------|---------|---------|--------|-------|
-| act_001 | 2026-01-10 | - | 5k | 512 | 1 | **10** | **10** | ~2% | ~109 | - | Done | Baseline |
-| act_002 | 2026-01-10 | act_001 | 20k | 512 | 1 | **10** | **10** | 10% | 99.9 | 65.2% | Done | More steps |
-| act_003 | 2026-01-10 | act_001 | 20k | 512 | **2** | **10** | **10** | 2% | 116.3 | 65.8% | Done | Deeper decoder |
-| act_004 | 2026-01-10 | act_001 | 20k | **1024** | **2** | **10** | **10** | 14% | 102.4 | 71.2% | Done | Wider + deeper |
-| **act_005** | 2026-01-10 | act_004 | 20k | **1024** | **4** | **10** | **10** | **24%** | 95.5 | 71.6% | Done | **🏆 SOTA** |
-| ~~act_batch_01~~ | 2026-01-11 | - | 100k | 512 | 1 | ~~100~~ | 10 | 0% | 17.25 | 7.7% | Failed | ❌ Wrong chunk_size! |
-| ~~act_batch_02~~ | 2026-01-11 | - | 50k | 1024 | 4 | ~~100~~ | 10 | 0% | 14.97 | 5.7% | Failed | ❌ Wrong chunk_size! |
-| ~~act_batch_03~~ | 2026-01-11 | - | 100k | 1024 | 4 | ~~100~~ | 10 | 0% | 23.21 | 7.9% | Failed | ❌ Wrong chunk_size! |
+| 实验ID | 日期 | 父实验 | 步数 | horizon | n_action | down_dims | 成功率 | avg_sum | avg_max | 状态 | 备注 |
+|--------|------|--------|------|---------|----------|-----------|--------|---------|---------|------|------|
+| exp_001 | 2026-01-10 | - | 20k | 16 | 8 | [256,512,1024] | 12% | 79.5 | 62.6% | 完成 | 基线 |
+| exp_002 | 2026-01-10 | exp_001 | 50k | 16 | 8 | [256,512,1024] | 16% | 112.2 | 62.6% | 完成 | 增加步数 |
+| exp_003 | 2026-01-10 | exp_001 | 20k | **32** | 8 | [256,512,1024] | 18% | 86.1 | 54.1% | 完成 | 增大 horizon |
+| exp_004 | 2026-01-10 | exp_001 | 20k | 16 | **16** | [256,512,1024] | 2% | 53.6 | - | 完成 | 增加动作步数（失败）|
+| exp_005 | 2026-01-10 | exp_001 | 20k | 16 | **4** | [256,512,1024] | 6% | 76.4 | 54.1% | 完成 | 减少动作步数（失败）|
+| **exp_006** | 2026-01-10 | exp_003 | **100k** | **32** | 8 | [256,512,1024] | **54%** | 97.14 | 96.5% | 完成 | **🏆 最优** |
 
-### Key Findings (ACT)
+### 关键发现 (Diffusion)
 
-1. ⚠️ **chunk_size=10 is critical!** Do NOT change to 100!
-2. `dim_model=1024` > `dim_model=512`
-3. `n_decoder_layers=4` is optimal
-4. More training (50k+) may further improve
+1. `horizon=32` 优于 `horizon=16` (+6个百分点)
+2. `n_action_steps=8` 是最优值
+3. 100k步 = 125个epoch，相比20k步有显著提升
 
-### Critical Parameters (ACT)
+---
+
+## ACT 实验 (PushT)
+
+| 实验ID | 日期 | 父实验 | 步数 | dim_model | n_dec | chunk_size | n_action | 成功率 | avg_sum | avg_max | 状态 | 备注 |
+|--------|------|--------|------|-----------|-------|------------|----------|--------|---------|---------|------|------|
+| act_001 | 2026-01-10 | - | 5k | 512 | 1 | **10** | **10** | ~2% | ~109 | - | 完成 | 基线 |
+| act_002 | 2026-01-10 | act_001 | 20k | 512 | 1 | **10** | **10** | 10% | 99.9 | 65.2% | 完成 | 增加步数 |
+| act_003 | 2026-01-10 | act_001 | 20k | 512 | **2** | **10** | **10** | 2% | 116.3 | 65.8% | 完成 | 加深decoder |
+| act_004 | 2026-01-10 | act_001 | 20k | **1024** | **2** | **10** | **10** | 14% | 102.4 | 71.2% | 完成 | 加宽+加深 |
+| **act_005** | 2026-01-10 | act_004 | 20k | **1024** | **4** | **10** | **10** | **24%** | 95.5 | 71.6% | 完成 | **🏆 最优** |
+| ~~act_batch_01~~ | 2026-01-11 | - | 100k | 512 | 1 | ~~100~~ | 10 | 0% | 17.25 | 7.7% | 失败 | ❌ chunk_size 错误！|
+| ~~act_batch_02~~ | 2026-01-11 | - | 50k | 1024 | 4 | ~~100~~ | 10 | 0% | 14.97 | 5.7% | 失败 | ❌ chunk_size 错误！|
+| ~~act_batch_03~~ | 2026-01-11 | - | 100k | 1024 | 4 | ~~100~~ | 10 | 0% | 23.21 | 7.9% | 失败 | ❌ chunk_size 错误！|
+
+### 关键发现 (ACT)
+
+1. ⚠️ **chunk_size=10 极其关键！** 绝对不能改成 100！
+2. `dim_model=1024` 优于 `dim_model=512`
+3. `n_decoder_layers=4` 是最优值
+4. 更多训练 (50k+) 可能进一步提升
+
+### 关键参数 (ACT)
 
 ```yaml
-# NEVER change these without explicit experiment purpose:
-chunk_size: 10        # Predicts 1 second of actions
-n_action_steps: 10    # Must match chunk_size
+# 没有明确实验目的时，绝对不要修改这些参数：
+chunk_size: 10        # 预测1秒的动作序列
+n_action_steps: 10    # 必须与 chunk_size 匹配
 ```
 
 ---
 
-## Failed Experiments Log
+## 失败实验记录
 
-| Date | Issue | Root Cause | Lesson |
-|------|-------|------------|--------|
-| 2026-01-12 | 10 ACT experiments all 0% success | chunk_size changed from 10 to 100 | Always check experiment_registry.md before setting params |
+| 日期 | 问题 | 根本原因 | 教训 |
+|------|------|----------|------|
+| 2026-01-12 | 10个ACT实验全部0%成功率 | chunk_size从10改成了100 | 设置参数前必须先查阅 experiment_registry.md |
 
 ---
 
-## Next Experiment Plan
+## 下一步实验计划
 
-- [ ] ACT with 50k steps, chunk_size=10, dim=1024, dec=4 (extend SOTA)
-- [ ] Diffusion with 200k steps (test ceiling)
-- [ ] ACT with chunk_size=20 (controlled experiment)
+- [ ] ACT 50k步, chunk_size=10, dim=1024, dec=4（延长SOTA训练）
+- [ ] Diffusion 200k步（测试性能天花板）
+- [ ] ACT chunk_size=20（对照实验）
 
 ---
 
