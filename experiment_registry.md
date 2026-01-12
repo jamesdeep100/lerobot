@@ -76,6 +76,42 @@ n_action_steps: 10    # 必须与 chunk_size 匹配
 
 ---
 
+## 多机批量启动规范
+
+### 启动流程
+
+```bash
+# 1. 创建批次目录
+BATCH_ID="batch_$(date '+%m%d_%H%M')"
+mkdir -p experiments/${BATCH_ID}
+
+# 2. 复制配置模板
+cp scripts/templates/batch_config.yaml experiments/${BATCH_ID}/config.yaml
+
+# 3. 编辑配置（必须指定 parent！）
+vim experiments/${BATCH_ID}/config.yaml
+
+# 4. 启动
+./scripts/run_batch.sh experiments/${BATCH_ID}/config.yaml
+```
+
+### 机器分配
+
+| 机器 | GPU | Tailscale IP | 适合策略 |
+|------|-----|--------------|----------|
+| 笔记本 | RTX 5090 | localhost | Diffusion（更快）|
+| 台式机 | RTX 3060 Ti | 100.67.100.43 | ACT |
+
+### ⚠️ 启动前检查
+
+- [ ] 查阅本文档确认最佳参数
+- [ ] ACT: chunk_size=10, n_action_steps=10
+- [ ] Diffusion: horizon=32, n_action_steps=8
+- [ ] 每个实验都指定了 parent 父实验
+- [ ] 台式机 Tailscale 连接正常
+
+---
+
 ## 归档规范
 
 每个实验必须包含以下文件：
