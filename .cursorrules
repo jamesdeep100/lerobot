@@ -8,11 +8,10 @@ lerobot/
 ├── .cursorrules              # 核心规范（本文件）
 ├── experiment_registry.md    # 实验记录表（参数历史、SOTA）
 ├── scripts/
-│   ├── templates/            # 模板文件（只读，严禁修改）
-│   │   ├── run_batch.sh      # 多机调度脚本
-│   │   ├── train_act.sh      # ACT 训练模板
-│   │   ├── train_diffusion.sh # Diffusion 训练模板
-│   │   └── eval_model.sh     # 评估模板
+│   ├── run_batch.sh          # 多机调度脚本
+│   ├── train_act.sh          # ACT 训练脚本
+│   ├── train_diffusion.sh    # Diffusion 训练脚本
+│   └── eval_model.py         # 评估脚本
 └── experiments/              # 实验归档目录
 ```
 
@@ -39,8 +38,8 @@ READ experiments/<parent_exp>/config.yaml  # 基于父实验配置
 ### 3. 创建新实验时
 
 1. 在 `experiments/` 下创建 `exp_NNN_name/` 目录
-2. 从 `scripts/templates/` **复制**模板到实验目录
-3. 修改复制后的脚本，**严禁修改** `scripts/templates/` 下的原始模板
+2. 从 `scripts/` 复制训练脚本到实验目录
+3. 修改复制后的脚本，保持 `scripts/` 下的原始脚本不变
 4. 生成 `config.yaml` 记录所有参数
 5. 更新 `experiment_registry.md` 添加新行
 
@@ -176,7 +175,7 @@ experiments/batch_MMDD_HHMM/
 
 ```bash
 cd ~/ai_projects/lerobot
-source scripts/templates/run_batch.sh
+source scripts/run_batch.sh
 
 # 添加实验（基于 experiment_registry.md 中的最佳配置）
 add_laptop_exp "act" "exp_name" "--steps 50000 --dim_model 1024 --n_decoder_layers 4 --chunk_size 10 --eval"
@@ -217,7 +216,7 @@ add_desktop_exp "<policy>" "<name>" "<options>"
 ## 禁止行为
 
 1. ❌ 不查阅历史就设置参数
-2. ❌ 直接修改 `scripts/templates/` 下的文件
+2. ❌ 不经确认随意修改 `scripts/` 下的脚本
 3. ❌ 在原有实验目录上修改配置重跑
 4. ❌ 使用"默认值"而不是"历史最佳值"
 5. ❌ 批量起实验时使用未经验证的参数组合
