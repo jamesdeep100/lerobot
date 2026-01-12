@@ -136,6 +136,26 @@ git checkout exp/YYYYMMDD_HHMM_exp_name
 
 ## 历史教训记录
 
+### 2026-01-12: Shell 环境隔离导致变量丢失
+
+- **错误**: 在不同命令中分别执行 `source run_batch.sh`、`add_laptop_exp`、`run_all`
+- **后果**: 每次运行新命令时 shell 环境隔离，`BATCH_TIMESTAMP`、`BATCH_DIR`、`LAPTOP_EXPS` 等变量丢失
+- **解决方案**: **必须在同一个命令中完成所有操作**
+
+```bash
+# ✅ 正确做法：在同一个命令中完成
+cd ~/ai_projects/lerobot
+source scripts/run_batch.sh
+set_batch_purpose "实验目的描述"
+add_laptop_exp "act" "exp_name" "--steps 50000" "子实验目的"
+run_all
+
+# ❌ 错误做法：分开执行（变量会丢失）
+# 命令1: source scripts/run_batch.sh
+# 命令2: add_laptop_exp ...  ← BATCH_TIMESTAMP 丢失！
+# 命令3: run_all             ← LAPTOP_EXPS 丢失！
+```
+
 ### 2026-01-12: chunk_size 错误导致实验失败
 
 - **错误**: 将 ACT 的 `chunk_size` 从 10 改为 100
