@@ -10,7 +10,7 @@
 #   --horizon N        预测序列长度 (默认: 32)
 #   --n_action_steps N 执行动作数 (默认: 8)
 #   --batch_size N     批量大小 (默认: 32)
-#   --eval             训练后自动评估
+#   --no-eval          跳过评估（默认自动评估）
 #   --eval_episodes N  评估轮数 (默认: 50)
 # ============================================
 
@@ -32,8 +32,8 @@ BATCH_SIZE=32                     # 批量大小
 # 模型参数
 DOWN_DIMS="[256, 512, 1024]"      # U-Net 下采样维度
 
-# 评估选项
-DO_EVAL=false
+# 评估选项（默认开启）
+DO_EVAL=true
 EVAL_EPISODES=50
 
 # 输出目录（可通过参数覆盖）
@@ -67,8 +67,8 @@ while [[ $# -gt 0 ]]; do
             OUTPUT_DIR="$2"
             shift 2
             ;;
-        --eval)
-            DO_EVAL=true
+        --no-eval)
+            DO_EVAL=false
             shift
             ;;
         --eval_episodes)

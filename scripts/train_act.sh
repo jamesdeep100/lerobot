@@ -12,7 +12,7 @@
 #   --chunk_size N     Action Chunk 大小 (默认: 10)
 #   --n_action_steps N 执行动作数 (默认: 10)
 #   --batch_size N     批量大小 (默认: 32)
-#   --eval             训练后自动评估
+#   --no-eval          跳过评估（默认自动评估）
 #   --eval_episodes N  评估轮数 (默认: 50)
 # ============================================
 
@@ -37,8 +37,8 @@ N_DECODER_LAYERS=4                # Decoder 层数 (最佳: 4)
 CHUNK_SIZE=10                     # Action Chunk 大小
 N_ACTION_STEPS=10                 # 执行动作数
 
-# 评估选项
-DO_EVAL=false
+# 评估选项（默认开启）
+DO_EVAL=true
 EVAL_EPISODES=50
 
 # 输出目录（可通过参数覆盖）
@@ -80,8 +80,8 @@ while [[ $# -gt 0 ]]; do
             OUTPUT_DIR="$2"
             shift 2
             ;;
-        --eval)
-            DO_EVAL=true
+        --no-eval)
+            DO_EVAL=false
             shift
             ;;
         --eval_episodes)
