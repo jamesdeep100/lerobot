@@ -326,7 +326,7 @@ echo \"\"
 echo \"======================================\"
 echo \"🔬 实验: ${exp_name} (${policy_type})\"
 echo \"======================================\"
-./scripts/train_${policy_type}.sh ${exp_name} ${options} --eval
+./scripts/templates/train_${policy_type}.sh ${exp_name} ${options} --eval
 "
     done
     
@@ -389,7 +389,7 @@ echo \"\"
 echo \"======================================\"
 echo \"🔬 实验: ${exp_name} (${policy_type})\"
 echo \"======================================\"
-./scripts/train_${policy_type}.sh ${exp_name} ${options} --eval
+./scripts/templates/train_${policy_type}.sh ${exp_name} ${options} --eval
 "
     done
     
