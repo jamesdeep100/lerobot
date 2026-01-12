@@ -110,14 +110,88 @@ sed -i "s/chunk_size=[0-9]*/chunk_size=${CHUNK_SIZE}/" "${TRAIN_SCRIPT}"
 sed -i "s/n_action_steps=[0-9]*/n_action_steps=${N_ACTION_STEPS}/" "${TRAIN_SCRIPT}"
 sed -i "s/batch_size = [0-9]*/batch_size = ${BATCH_SIZE}/" "${TRAIN_SCRIPT}"
 
+# ============================================
+# 记录元数据
+# ============================================
+
+COMMIT_HASH=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
+HAS_UNCOMMITTED=$(git status --porcelain 2>/dev/null | wc -l)
+PYTHON_VERSION=$(python --version 2>&1)
+TORCH_VERSION=$(python -c "import torch; print(torch.__version__)" 2>/dev/null || echo "unknown")
+CUDA_VERSION=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | head -1 || echo "unknown")
+GPU_NAME=$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1 || echo "unknown")
+
+START_TIME=$(date '+%Y-%m-%d %H:%M:%S')
+START_EPOCH=$(date +%s)
+
+# 保存训练代码快照
+cp "${TRAIN_SCRIPT}" "${OUTPUT_DIR}/train_snapshot.py"
+
 # 开始训练
 log "🏋️ 开始训练..."
 python "${TRAIN_SCRIPT}" 2>&1 | tee "${OUTPUT_DIR}/train.log"
+
+END_TIME=$(date '+%Y-%m-%d %H:%M:%S')
+END_EPOCH=$(date +%s)
+DURATION=$((END_EPOCH - START_EPOCH))
 
 # 验证模型保存
 if [ ! -f "${OUTPUT_DIR}/model.safetensors" ]; then
     error "模型保存失败！"
 fi
 
+# 提取最终 loss
+FINAL_LOSS=$(grep -oP 'Loss: \K[0-9.]+' "${OUTPUT_DIR}/train.log" | tail -1 || echo "unknown")
+
+# 生成完整 metadata.yaml
+cat > "${OUTPUT_DIR}/metadata.yaml" << EOF
+experiment:
+  id: ${EXP_NAME}
+  created: ${START_TIME}
+  parent: ${PARENT_EXP}
+  policy: act
+
+code:
+  commit_hash: ${COMMIT_HASH}
+  branch: $(git branch --show-current 2>/dev/null || echo "unknown")
+  has_uncommitted: $([[ ${HAS_UNCOMMITTED} -gt 0 ]] && echo "true" || echo "false")
+  experiment_branch: exp/${EXP_NAME}
+
+environment:
+  python: ${PYTHON_VERSION}
+  torch: ${TORCH_VERSION}
+  cuda_driver: ${CUDA_VERSION}
+  gpu: ${GPU_NAME}
+
+training:
+  start_time: ${START_TIME}
+  end_time: ${END_TIME}
+  duration_seconds: ${DURATION}
+  final_loss: ${FINAL_LOSS}
+  steps: ${TRAINING_STEPS}
+  batch_size: ${BATCH_SIZE}
+
+model:
+  dim_model: ${DIM_MODEL}
+  n_decoder_layers: ${N_DECODER_LAYERS}
+  chunk_size: ${CHUNK_SIZE}
+  n_action_steps: ${N_ACTION_STEPS}
+
+# 评估结果（评估后填充）
+evaluation:
+  n_episodes: null
+  success_rate: null
+  avg_sum_reward: null
+  avg_max_reward: null
+EOF
+
+# 创建实验专属分支（代码归档）
+log "📦 归档代码到分支 exp/${EXP_NAME}..."
+git stash -q 2>/dev/null || true
+git branch "exp/${EXP_NAME}" 2>/dev/null || log "分支已存在，跳过创建"
+git stash pop -q 2>/dev/null || true
+
 log "✅ 训练完成: ${OUTPUT_DIR}"
+log "📊 最终 Loss: ${FINAL_LOSS}"
+log "⏱️  训练时长: ${DURATION} 秒"
 log "💡 下一步: 运行 run_eval.sh 评估模型"

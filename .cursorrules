@@ -1,9 +1,10 @@
-# Cursor-Native Experiment Protocol (CNEP) v1.0
+# Cursor-Native Experiment Protocol (CNEP) v1.1
 # LeRobot 模型训练协同实验规范
 
 ## 核心原则
 
 你是一个**执行者**，不是决策者。所有实验参数必须有据可查，严禁凭空创造。
+**每个实验必须完整可追溯**：代码、配置、结果缺一不可。
 
 ## 强制行为规范
 
@@ -28,16 +29,79 @@ READ experiments/<parent_exp>/config.yaml  # 基于父实验配置
 4. 生成 `config.yaml` 记录所有参数
 5. 更新 `experiment_registry.md` 添加新行
 
-### 4. 实验目录结构
+### 4. 实验目录结构（完整归档）
 
 ```
 experiments/exp_NNN_name/
-├── config.yaml      # 完整参数配置
-├── run_train.sh     # 训练启动脚本（从模板复制）
-├── run_eval.sh      # 评估启动脚本（从模板复制）
-├── train.log        # 训练日志
-├── eval_result.json # 评估结果
-└── notes.md         # 实验结论
+├── config.yaml          # 完整参数配置
+├── run_train.sh         # 训练启动脚本（从模板复制）
+├── run_eval.sh          # 评估启动脚本（从模板复制）
+├── train_snapshot.py    # 训练代码快照（训练时自动复制）
+├── eval_snapshot.py     # 评估代码快照（评估时自动复制）
+├── train.log            # 训练日志
+├── eval.log             # 评估日志
+├── eval_result.json     # 评估结果
+├── model.safetensors    # 模型权重
+├── notes.md             # 实验结论
+└── metadata.yaml        # 环境元数据（见下）
+```
+
+### 5. 实验元数据要求 (metadata.yaml)
+
+每个实验必须记录以下信息：
+
+```yaml
+# metadata.yaml
+experiment:
+  id: exp_NNN_name
+  created: 2026-01-12 17:00:00
+  parent: exp_XXX  # 父实验
+
+code:
+  commit_hash: abc123def  # 当前 git commit
+  branch: main
+  has_uncommitted: false
+  experiment_branch: exp/exp_NNN_name  # 实验专属分支（训练后创建）
+
+environment:
+  python: 3.10.x
+  torch: 2.x.x
+  lerobot: x.x.x
+  cuda: 12.x
+  gpu: RTX 5090 / RTX 3060 Ti
+
+training:
+  start_time: 2026-01-12 17:00:00
+  end_time: 2026-01-12 20:00:00
+  duration_seconds: 10800
+  final_loss: 0.xxx
+
+evaluation:
+  n_episodes: 50
+  success_rate: xx.x%
+  avg_sum_reward: xx.xx
+  avg_max_reward: xx.xx
+```
+
+### 6. 代码归档规则
+
+**训练完成后，必须执行以下操作：**
+
+1. 创建实验专属分支: `git branch exp/exp_NNN_name`
+2. 在该分支上提交当前代码状态
+3. 记录 commit hash 到 `metadata.yaml`
+
+这确保每个实验的代码都可以完整追溯和复现。
+
+```bash
+# 训练完成后自动执行（在模板脚本中）
+git branch exp/${EXP_NAME} 2>/dev/null || true
+git stash
+git checkout exp/${EXP_NAME}
+git add -A
+git commit -m "[exp] ${EXP_NAME} - 训练完成快照"
+git checkout -
+git stash pop 2>/dev/null || true
 ```
 
 ## 关键参数参考表（从历史实验中提取）

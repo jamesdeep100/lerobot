@@ -54,6 +54,9 @@ log "📁 模型: ${MODEL_DIR}"
 log "🎮 Episodes: ${N_EPISODES}"
 log "============================================"
 
+# 保存评估代码快照
+cp scripts/eval_model.py "${MODEL_DIR}/eval_snapshot.py"
+
 # 运行评估
 python scripts/eval_model.py \
     --model_path "${MODEL_DIR}" \
@@ -70,4 +73,26 @@ if [ -f "${MODEL_DIR}/eval_result.json" ]; then
     log ""
     log "📊 结果摘要:"
     cat "${MODEL_DIR}/eval_result.json"
+    
+    # 更新 metadata.yaml 中的评估结果
+    if [ -f "${MODEL_DIR}/metadata.yaml" ]; then
+        log ""
+        log "📝 更新 metadata.yaml..."
+        
+        # 提取结果
+        SUCCESS_RATE=$(python -c "import json; print(json.load(open('${MODEL_DIR}/eval_result.json'))['pc_success'])" 2>/dev/null || echo "null")
+        AVG_SUM=$(python -c "import json; print(json.load(open('${MODEL_DIR}/eval_result.json'))['avg_sum_reward'])" 2>/dev/null || echo "null")
+        AVG_MAX=$(python -c "import json; print(json.load(open('${MODEL_DIR}/eval_result.json'))['avg_max_reward'])" 2>/dev/null || echo "null")
+        
+        # 更新 metadata.yaml
+        sed -i "s/n_episodes: null/n_episodes: ${N_EPISODES}/" "${MODEL_DIR}/metadata.yaml"
+        sed -i "s/success_rate: null/success_rate: ${SUCCESS_RATE}%/" "${MODEL_DIR}/metadata.yaml"
+        sed -i "s/avg_sum_reward: null/avg_sum_reward: ${AVG_SUM}/" "${MODEL_DIR}/metadata.yaml"
+        sed -i "s/avg_max_reward: null/avg_max_reward: ${AVG_MAX}/" "${MODEL_DIR}/metadata.yaml"
+        
+        log "✅ metadata.yaml 已更新"
+    fi
 fi
+
+log ""
+log "💡 下一步: 更新 experiment_registry.md 记录结果"

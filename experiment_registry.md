@@ -76,4 +76,31 @@ n_action_steps: 10    # Must match chunk_size
 
 ---
 
+## 归档规范
+
+每个实验必须包含以下文件：
+
+| 文件 | 说明 | 必须 |
+|------|------|------|
+| `config.yaml` | 参数配置 | ✅ |
+| `metadata.yaml` | 环境元数据、代码版本 | ✅ |
+| `run_train.sh` | 训练启动脚本 | ✅ |
+| `run_eval.sh` | 评估启动脚本 | ✅ |
+| `train_snapshot.py` | 训练代码快照 | ✅ |
+| `eval_snapshot.py` | 评估代码快照 | ✅ |
+| `train.log` | 训练日志 | ✅ |
+| `eval.log` | 评估日志 | ✅ |
+| `eval_result.json` | 评估结果 | ✅ |
+| `model.safetensors` | 模型权重 | ✅ |
+| `notes.md` | 实验结论 | ✅ |
+
+### 代码追溯
+
+- 每个实验对应一个 git 分支: `exp/exp_NNN_name`
+- 训练完成后自动创建分支
+- 通过 `git checkout exp/exp_NNN_name` 可恢复当时代码
+
+---
+
 *Last Updated: 2026-01-12*
+*Protocol Version: CNEP v1.1*
