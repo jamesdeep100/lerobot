@@ -41,6 +41,9 @@ N_ACTION_STEPS=10                 # 执行动作数
 DO_EVAL=false
 EVAL_EPISODES=50
 
+# 输出目录（可通过参数覆盖）
+OUTPUT_DIR=""
+
 # ============================================
 # 解析命令行参数
 # ============================================
@@ -73,6 +76,10 @@ while [[ $# -gt 0 ]]; do
             BATCH_SIZE="$2"
             shift 2
             ;;
+        --output_dir)
+            OUTPUT_DIR="$2"
+            shift 2
+            ;;
         --eval)
             DO_EVAL=true
             shift
@@ -87,6 +94,11 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# 如果没有指定输出目录，使用默认（独立实验仓库）
+if [ -z "$OUTPUT_DIR" ]; then
+    OUTPUT_DIR="/home/james/ai_projects/lerobot-experiments/${EXP_NAME}"
+fi
 
 # ============================================
 # 以下内容无需修改
@@ -112,8 +124,7 @@ conda activate lerobot
 pip uninstall pymunk -y 2>/dev/null || true
 pip install pymunk==6.4.0 -q 2>/dev/null || true
 
-# 输出目录
-OUTPUT_DIR="experiments/${EXP_NAME}"
+# 创建输出目录
 mkdir -p "${OUTPUT_DIR}"
 
 # 生成 config.yaml
@@ -237,11 +248,16 @@ evaluation:
   avg_max_reward: null
 EOF
 
-# 创建实验专属分支（代码归档）
+# 创建实验专属分支（基于当前 HEAD 的快照）
 log "📦 归档代码到分支 exp/${EXP_NAME}..."
-git stash -q 2>/dev/null || true
-git branch "exp/${EXP_NAME}" 2>/dev/null || log "分支已存在，跳过创建"
-git stash pop -q 2>/dev/null || true
+
+# 直接创建分支指向当前 HEAD（不切换，不提交）
+if git show-ref --verify --quiet "refs/heads/exp/${EXP_NAME}"; then
+    log "分支已存在，跳过创建"
+else
+    git branch "exp/${EXP_NAME}" HEAD 2>/dev/null || true
+    log "✅ 分支 exp/${EXP_NAME} 已创建"
+fi
 
 log "✅ 训练完成: ${OUTPUT_DIR}"
 log "📊 最终 Loss: ${FINAL_LOSS}"
