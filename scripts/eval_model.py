@@ -184,7 +184,8 @@ def evaluate(policy, n_episodes: int = 50, verbose: bool = True, video_dir: str 
         ep_time = time.time() - ep_start
         episode_times.append(ep_time)
         
-        success = max_reward >= 1.0
+        # 使用环境返回的 is_success（官方标准：coverage > 0.95）
+        success = info.get("is_success", False)
         successes.append(success)
         avg_rewards.append(episode_reward / step)  # 该 episode 的平均奖励
         max_rewards.append(max_reward)
