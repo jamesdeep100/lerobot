@@ -21,6 +21,8 @@ import torch
 import numpy as np
 import gymnasium as gym
 
+from lerobot.utils.random_utils import set_seed
+
 # 确保输出实时刷新
 def log(msg):
     print(msg, flush=True)
@@ -89,7 +91,7 @@ def load_policy(model_path: str, policy_type: str):
     return policy, preprocessor, postprocessor
 
 
-def evaluate(policy, n_episodes: int = 50, verbose: bool = True, video_dir: str = None, n_video_episodes: int = 3, preprocessor=None, postprocessor=None):
+def evaluate(policy, n_episodes: int = 50, verbose: bool = True, video_dir: str = None, n_video_episodes: int = 3, preprocessor=None, postprocessor=None, seed: int = 42):
     """评估模型
     
     Args:
@@ -100,6 +102,7 @@ def evaluate(policy, n_episodes: int = 50, verbose: bool = True, video_dir: str 
         postprocessor: 动作后处理器（用于反归一化）
         video_dir: 视频保存目录，None 则不录制
         n_video_episodes: 录制视频的 episode 数量
+        seed: 随机种子（用于可复现评测）
     """
     import gym_pusht  # 确保环境已注册
     from gymnasium.wrappers import RecordVideo
@@ -119,18 +122,21 @@ def evaluate(policy, n_episodes: int = 50, verbose: bool = True, video_dir: str 
         log(f"[{time.strftime('%H:%M:%S')}] 🎬 视频将保存到: {video_dir} (前{n_video_episodes}个episode)")
     
     successes = []
+    sum_rewards = []  # 每个 episode 的累计奖励
     avg_rewards = []  # 每个 episode 的平均奖励（reward_sum / steps）
     max_rewards = []
     episode_times = []
+    episode_seeds = []  # 每个 episode 的 seed
     
-    log(f"[{time.strftime('%H:%M:%S')}] 🚀 开始评估 ({n_episodes} episodes)...")
+    log(f"[{time.strftime('%H:%M:%S')}] 🚀 开始评估 ({n_episodes} episodes, seed={seed})...")
     log("=" * 60)
     
     total_start = time.time()
     
     for ep in range(n_episodes):
         ep_start = time.time()
-        obs, info = env.reset()
+        # 每个 episode 使用不同的 seed（官方做法：seed + ep）
+        obs, info = env.reset(seed=seed + ep)
         policy.reset()
         done = False
         episode_reward = 0
@@ -157,8 +163,8 @@ def evaluate(policy, n_episodes: int = 50, verbose: bool = True, video_dir: str 
                     "observation.state": state.unsqueeze(0).cuda(),
                 }
             
-            # 推理
-            with torch.no_grad():
+            # 推理（使用 inference_mode 对齐官方，性能更优）
+            with torch.inference_mode():
                 action = policy.select_action(batch)
             
             # 应用后处理器（反归一化动作）
@@ -186,12 +192,16 @@ def evaluate(policy, n_episodes: int = 50, verbose: bool = True, video_dir: str 
         
         # 使用环境返回的 is_success（官方标准：coverage > 0.95）
         success = info.get("is_success", False)
+        ep_seed = seed + ep  # 该 episode 使用的 seed
+        
         successes.append(success)
+        sum_rewards.append(episode_reward)
         avg_rewards.append(episode_reward / step)  # 该 episode 的平均奖励
         max_rewards.append(max_reward)
+        episode_seeds.append(ep_seed)
         
         # 预估剩余时间
-        avg_time = np.mean(episode_times)
+        avg_time = np.nanmean(episode_times)
         remaining = avg_time * (n_episodes - ep - 1)
         
         log(f"[{time.strftime('%H:%M:%S')}] Episode {ep+1}/{n_episodes}: "
@@ -201,23 +211,40 @@ def evaluate(policy, n_episodes: int = 50, verbose: bool = True, video_dir: str 
     env.close()
     total_time = time.time() - total_start
     
-    # 汇总结果
+    # 汇总结果（对齐官方格式）
+    per_episode = [
+        {
+            "episode_ix": i,
+            "seed": episode_seeds[i],
+            "success": successes[i],
+            "sum_reward": sum_rewards[i],
+            "max_reward": max_rewards[i],
+        }
+        for i in range(n_episodes)
+    ]
+    
     results = {
-        "pc_success": 100 * np.mean(successes),
-        "avg_reward": float(np.mean(avg_rewards)),  # 所有 episode 平均奖励的平均值
-        "avg_max_reward": float(np.mean(max_rewards)),
-        "n_episodes": n_episodes,
-        "total_time_s": total_time,
-        "avg_episode_time_s": float(np.mean(episode_times)),
+        "per_episode": per_episode,
+        "aggregated": {
+            "pc_success": 100 * np.nanmean(successes),
+            "avg_sum_reward": float(np.nanmean(sum_rewards)),
+            "avg_reward": float(np.nanmean(avg_rewards)),  # 所有 episode 平均奖励的平均值
+            "avg_max_reward": float(np.nanmean(max_rewards)),
+            "n_episodes": n_episodes,
+            "seed": seed,  # 起始种子
+            "total_time_s": total_time,
+            "avg_episode_time_s": float(np.nanmean(episode_times)),
+        },
     }
     
+    agg = results["aggregated"]
     log("\n" + "=" * 60)
     log(f"[{time.strftime('%H:%M:%S')}] 📊 评估结果:")
-    log(f"   pc_success: {results['pc_success']:.1f}%")
-    log(f"   avg_reward: {results['avg_reward']:.4f}")  # 平均奖励，范围 0-1
-    log(f"   avg_max_reward: {results['avg_max_reward']:.4f}")
-    log(f"   总耗时: {total_time:.1f}s ({total_time/60:.1f}分钟)")
-    log(f"   平均每 episode: {results['avg_episode_time_s']:.1f}s")
+    log(f"   pc_success: {agg['pc_success']:.1f}%")
+    log(f"   avg_reward: {agg['avg_reward']:.4f}")  # 平均奖励，范围 0-1
+    log(f"   avg_max_reward: {agg['avg_max_reward']:.4f}")
+    log(f"   总耗时: {agg['total_time_s']:.1f}s ({agg['total_time_s']/60:.1f}分钟)")
+    log(f"   平均每 episode: {agg['avg_episode_time_s']:.1f}s")
     log("=" * 60)
     
     return results
@@ -233,14 +260,19 @@ def main():
     parser.add_argument("--quiet", action="store_true", help="减少输出")
     parser.add_argument("--video_dir", type=str, default=None, help="视频保存目录 (默认: 模型目录/videos)")
     parser.add_argument("--n_video_episodes", type=int, default=3, help="录制视频的 episode 数")
+    parser.add_argument("--seed", type=int, default=42, help="随机种子 (用于可复现评测)")
     
     args = parser.parse_args()
+    
+    # 设置全局随机种子（对齐官方）
+    set_seed(args.seed)
     
     log("=" * 60)
     log(f"🔬 模型评估")
     log(f"   模型路径: {args.model_path}")
     log(f"   策略类型: {args.policy_type}")
     log(f"   评估数量: {args.n_episodes} episodes")
+    log(f"   随机种子: {args.seed}")
     log("=" * 60)
     
     # 检查模型路径
@@ -269,7 +301,8 @@ def main():
         video_dir=video_dir,
         n_video_episodes=args.n_video_episodes,
         preprocessor=preprocessor,
-        postprocessor=postprocessor
+        postprocessor=postprocessor,
+        seed=args.seed
     )
     
     # 保存结果
