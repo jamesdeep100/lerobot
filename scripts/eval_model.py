@@ -119,7 +119,7 @@ def evaluate(policy, n_episodes: int = 50, verbose: bool = True, video_dir: str 
         log(f"[{time.strftime('%H:%M:%S')}] 🎬 视频将保存到: {video_dir} (前{n_video_episodes}个episode)")
     
     successes = []
-    sum_rewards = []
+    avg_rewards = []  # 每个 episode 的平均奖励（reward_sum / steps）
     max_rewards = []
     episode_times = []
     
@@ -186,7 +186,7 @@ def evaluate(policy, n_episodes: int = 50, verbose: bool = True, video_dir: str 
         
         success = max_reward >= 1.0
         successes.append(success)
-        sum_rewards.append(episode_reward)
+        avg_rewards.append(episode_reward / step)  # 该 episode 的平均奖励
         max_rewards.append(max_reward)
         
         # 预估剩余时间
@@ -203,7 +203,7 @@ def evaluate(policy, n_episodes: int = 50, verbose: bool = True, video_dir: str 
     # 汇总结果
     results = {
         "pc_success": 100 * np.mean(successes),
-        "avg_sum_reward": float(np.mean(sum_rewards)),
+        "avg_reward": float(np.mean(avg_rewards)),  # 所有 episode 平均奖励的平均值
         "avg_max_reward": float(np.mean(max_rewards)),
         "n_episodes": n_episodes,
         "total_time_s": total_time,
@@ -213,7 +213,7 @@ def evaluate(policy, n_episodes: int = 50, verbose: bool = True, video_dir: str 
     log("\n" + "=" * 60)
     log(f"[{time.strftime('%H:%M:%S')}] 📊 评估结果:")
     log(f"   pc_success: {results['pc_success']:.1f}%")
-    log(f"   avg_sum_reward: {results['avg_sum_reward']:.2f}")
+    log(f"   avg_reward: {results['avg_reward']:.4f}")  # 平均奖励，范围 0-1
     log(f"   avg_max_reward: {results['avg_max_reward']:.4f}")
     log(f"   总耗时: {total_time:.1f}s ({total_time/60:.1f}分钟)")
     log(f"   平均每 episode: {results['avg_episode_time_s']:.1f}s")
